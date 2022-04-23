@@ -31,18 +31,16 @@ static void timer12_start(void){
     gptStartContinuous(&GPTD12, 0xFFFF); //let the timer count to max value
 }
 
-void SetMotor(int16_t MotorInput[4]) {
+void SetMotor(int16_t MotorInput[4], int16_t* speeds) {
 	int16_t speed = 0, rotation = 0;
-	if (MotorInput[0] == 1)
-		speed += 800;
-	if (MotorInput[1] == 1)
-		rotation += 300;
-	if (MotorInput[2] == 1)
-		speed -= 800;
-	if (MotorInput[3] == 1)
-		rotation -= 300;
-	left_motor_set_speed(speed - rotation);
-	right_motor_set_speed(speed + rotation);
+	if (MotorInput[0] == 1) speed += 800;
+	if (MotorInput[1] == 1) rotation += 300;
+	if (MotorInput[2] == 1) speed -= 800;
+	if (MotorInput[3] == 1) rotation -= 300;
+	speeds[0] = speed - rotation;
+	speeds[1] = speed + rotation;
+	left_motor_set_speed(speeds[0]);
+	right_motor_set_speed(speeds[1]);
 }
 
 int main(void) {
@@ -54,15 +52,19 @@ int main(void) {
     timer12_start(); //starts timer 12
     motors_init(); //inits the motors
 //    proximity_start(); // undefined reference to 'bus'
-    calibrate_ir();
+//    calibrate_ir();
     int16_t MotorInput[NB_DIRECTIONS] = {0, 0, 0, 0};
+    int16_t speeds[2] = {0, 0};
+    float position[3] = {0., 0., 0.};
     while (1) {
         ReceiveInt16FromComputer((BaseSequentialStream *) &SD3, MotorInput, NB_DIRECTIONS);
-        SetMotor(MotorInput);
-        for (uint8_t i = 0; i < 8; i++) {
-        	int8_t prox = get_calibrated_prox(i);
-        	SendInt8ToComputer((BaseSequentialStream *) &SDU1, prox, sizeof(int8_t));
-        }
+        SetMotor(MotorInput, speeds);
+        SendInt16ToComputer((BaseSequentialStream *) &SD3, speeds, 2);
+//        for (uint8_t i = 0; i < 8; i++) {
+//        	int8_t prox = get_calibrated_prox(i);
+//        	SendInt8ToComputer((BaseSequentialStream *) &SDU1, prox, sizeof(int8_t));
+//        }
+
     }
 }
 

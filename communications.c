@@ -10,10 +10,16 @@ void SendFloatToComputer(BaseSequentialStream* out, float* data, uint16_t size) 
 	chSequentialStreamWrite(out, (uint8_t*)data, sizeof(float) * size);
 }
 
-void SendInt8ToComputer(BaseSequentialStream* out, int8_t data, uint16_t size) {
+void SendInt8ToComputer(BaseSequentialStream* out, int8_t* data, uint16_t size) {
 	chSequentialStreamWrite(out, (uint8_t*)"START", 5);
 	chSequentialStreamWrite(out, (uint8_t*)&size, sizeof(uint16_t));
 	chSequentialStreamWrite(out, (uint8_t*)data, sizeof(int8_t) * size);
+}
+
+void SendInt16ToComputer(BaseSequentialStream* out, int16_t* data, uint16_t size) {
+	chSequentialStreamWrite(out, (uint8_t*)"START", 5);
+	chSequentialStreamWrite(out, (uint8_t*)&size, sizeof(uint16_t));
+	chSequentialStreamWrite(out, (uint8_t*)data, sizeof(int16_t) * size);
 }
 
 uint16_t ReceiveInt16FromComputer(BaseSequentialStream* in, int16_t* data, uint16_t size){
@@ -25,38 +31,24 @@ uint16_t ReceiveInt16FromComputer(BaseSequentialStream* in, int16_t* data, uint1
         c1 = chSequentialStreamGet(in);
         switch(state){
         	case 0:
-        		if(c1 == 'S')
-        			state = 1;
-        		else
-        			state = 0;
+        		if(c1 == 'S') state = 1;
+        		else state = 0;
         	case 1:
-        		if(c1 == 'T')
-        			state = 2;
-        		else if(c1 == 'S')
-        			state = 1;
-        		else
-        			state = 0;
+        		if(c1 == 'T') state = 2;
+        		else if(c1 == 'S') state = 1;
+        		else state = 0;
         	case 2:
-        		if(c1 == 'A')
-        			state = 3;
-        		else if(c1 == 'S')
-        			state = 1;
-        		else
-        			state = 0;
+        		if(c1 == 'A') state = 3;
+        		else if(c1 == 'S') state = 1;
+        		else state = 0;
         	case 3:
-        		if(c1 == 'R')
-        			state = 4;
-        		else if(c1 == 'S')
-        			state = 1;
-        		else
-        			state = 0;
+        		if(c1 == 'R') state = 4;
+        		else if(c1 == 'S') state = 1;
+        		else state = 0;
         	case 4:
-        		if(c1 == 'T')
-        			state = 5;
-        		else if(c1 == 'S')
-        			state = 1;
-        		else
-        			state = 0;
+        		if(c1 == 'T') state = 5;
+        		else if(c1 == 'S') state = 1;
+        		else state = 0;
         }
 	}
 	c1 = chSequentialStreamGet(in);
@@ -66,9 +58,7 @@ uint16_t ReceiveInt16FromComputer(BaseSequentialStream* in, int16_t* data, uint1
 		for(i = 0 ; i < (temp_size/2) ; i++){
 			c1 = chSequentialStreamGet(in);
 			c2 = chSequentialStreamGet(in);
-			data[i] = (int16_t)((c1 | c2<<8));
-//			data[i*2] = (int16_t)((c1 | c2<<8));
-//			data[(i*2)+1] = 0;
+			data[i] = (int16_t)((c1 | c2 << 8));
 		}
 	}
 	return temp_size/2;
