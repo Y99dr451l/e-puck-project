@@ -14,6 +14,10 @@
 
 #define NB_DIRECTIONS 4
 
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
 static void serial_start(void) {
 	static SerialConfig ser_cfg = {115200, 0, 0, 0,};
 	sdStart(&SD3, &ser_cfg); // UART3.
@@ -44,6 +48,9 @@ void SetMotor(int16_t MotorInput[4], int16_t* speeds) {
 }
 
 int main(void) {
+	messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
+	proximity_msg_t prox_values;
+	messagebus_init(&bus, &bus_lock, &bus_condvar);
     halInit();
     chSysInit();
     //mpu_init();
@@ -55,16 +62,28 @@ int main(void) {
 //    calibrate_ir();
     int16_t MotorInput[NB_DIRECTIONS] = {0, 0, 0, 0};
     int16_t speeds[2] = {0, 0};
-    float position[3] = {0., 0., 0.};
+    float xpos = 0, ypos = 0, theta = 0; //(x, y, theta)
     while (1) {
         ReceiveInt16FromComputer((BaseSequentialStream *) &SD3, MotorInput, NB_DIRECTIONS);
         SetMotor(MotorInput, speeds);
-        SendInt16ToComputer((BaseSequentialStream *) &SD3, speeds, 2);
+        int16_t wheelpos[2] = {(uint16_t)left_motor_get_pos(), (uint16_t)right_motor_get_pos()};
+        SendInt16ToComputer((BaseSequentialStream *) &SD3, wheelpos, 2);
+        // 1000 STEPS PER FULL ROTATION, R = 4 CM -> D = 12.566 CM -> 0.012566 CM/STEP
+//        if (speeds[0] != 0 && speeds[1] != 0) { // http://faculty.salina.k-state.edu/tim/robotics_sg/Control/kinematics/odometry.html
+//			float timestep = ;
+//			float dleft = 0.012566*speeds[0]*timestep;
+//			float dright = 0.012566*speeds[1]*timestep;
+//			float dcenter = 0.5*(dleft+dright);
+//			float phi = (dright-dleft)/ROBOT_WIDTH;
+//			xpos += dcenter*cos(position[2]+0.5*phi);
+//			ypos += dcenter*sin(position[2]+0.5*phi);
+//			theta += phi;
+//        }
+//        messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 //        for (uint8_t i = 0; i < 8; i++) {
 //        	int8_t prox = get_calibrated_prox(i);
 //        	SendInt8ToComputer((BaseSequentialStream *) &SDU1, prox, sizeof(int8_t));
 //        }
-
     }
 }
 
