@@ -10,5 +10,6 @@ void SendInt16ToComputer(BaseSequentialStream* out, int16_t* data, uint16_t size
 
 uint16_t ReceiveInt16FromComputer(BaseSequentialStream* in, int16_t* data, uint16_t size);
 
+uint16_t ReceiveFloatFromComputer(BaseSequentialStream* in, float* data, uint16_t size);
 
 #endif /* COMMUNICATIONS_H */
