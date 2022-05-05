@@ -118,7 +118,7 @@ int main(void) {
 
 static THD_WORKING_AREA(waInitBot, 1024); // UPDATE THIS NUMBER
 static THD_FUNCTION(InitBot, arg) { // triggered on start or on reset button
-    chRegSetThreadName(__FUNCTION__); // (void)arg;
+    chRegSetThreadName(__FUNCTION__); (void)arg;
     for (uint8_t i = 0; i < 4; i++) set_rgb_led(i, 0, 0, 10); // blue = reset
     chThdSleep(500); // wait for button release
     GPTD12.tim->CNT = 0;
@@ -136,8 +136,7 @@ static THD_FUNCTION(InitBot, arg) { // triggered on start or on reset button
 
 static THD_WORKING_AREA(waRunBot, 1024); // UPDATE THIS NUMBER
 static THD_FUNCTION(RunBot, arg) { // movement and odometry
-    chRegSetThreadName(__FUNCTION__);
-    (void)arg;
+    chRegSetThreadName(__FUNCTION__); (void)arg;
     for (uint8_t i = 0; i < 4; i++) toggle_rgb_led(i, GREEN_LED, 10); // blinking
     float Xdiff = destination[Xpos]-position[Xpos];
     float Ydiff = destination[Ypos]-position[Ypos];
