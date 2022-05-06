@@ -1,5 +1,6 @@
 import struct
 import sys
+import time
 import keyboard
 import numpy as np
 import serial
@@ -22,6 +23,7 @@ def sendSerial(data, type='int16'):
     port.write(b'START')
     port.write(struct.pack('<h', tsize*size[0]))
     port.write(send_buffer)
+    print(send_buffer)
     #print('sent: ' + f'{data}'[1:-1])
     # port_write = b'start' + struct.pack('<h', 2*size[0]) + send_buffer
     # print(port_write)
@@ -70,8 +72,12 @@ def readSerial(type='int16'):
         return []
 
 while (True):
-    data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
-    data = np.array(data, dtype='int16')
-    sendSerial(data, 'int16')
-    input = readSerial('int16')
-    print(input)
+    #data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
+    data = np.array((0, 0, 0), dtype='float')
+    sendSerial(data, 'float')
+    time.sleep(1)
+    data = np.array((10, 0, 0), dtype='float')
+    sendSerial(data, 'float')
+    quit()
+    #input = readSerial('int16')
+    #print(input)

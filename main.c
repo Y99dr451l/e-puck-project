@@ -11,6 +11,7 @@
 #include <motors.h>
 #include "leds.h"
 #include "button.h"
+#include "spi_comm.h"
 #include <sensors/proximity.h>
 #include <math.h>
 #include "communications.h"
@@ -34,25 +35,34 @@ static void timer12_start(void){
 }
 
 int main(void) {
-//	messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
-//	proximity_msg_t prox_values;
+	// order from src/main.c
+	halInit();
+	chSysInit();
+
 //	messagebus_init(&bus, &bus_lock, &bus_condvar);
-    halInit();
-    chSysInit();
-    serial_start();
-    usb_start();
-    timer12_start();
-    motors_init();
-//    proximity_start();
+
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+	usb_start();
+	motors_init();
+	//proximity_start();
+//	spi_comm_start();
+	serial_start();
+	//mic_start(NULL);
+
+	timer12_start();
 //    calibrate_ir();
     bot_start();
     pi_regulator_start();
 
+    //use these 2 lines at start of thread using the prox sensors
+//    messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
+//	proximity_msg_t prox_values;
+
 //	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 //	leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
 //	rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
-//	right_motor_set_speed(rightSpeed);
-//	left_motor_set_speed(leftSpeed);
 }
 
 #define STACK_CHK_GUARD 0xe2dee396
