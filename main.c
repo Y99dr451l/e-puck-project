@@ -29,7 +29,7 @@ static void serial_start(void) {
 
 static void timer12_start(void){
     // timer 12 is a 16 bit timer so we can measure time to about 65ms with a 1Mhz counter
-    static const GPTConfig gpt12cfg = {1000000, NULL, 0, 0}; // 1MHz timer clock in order to measure uS
+    static const GPTConfig gpt12cfg = {100000, NULL, 0, 0}; // 100KHz timer clock in order to measure 10us
     gptStart(&GPTD12, &gpt12cfg);
     gptStartContinuous(&GPTD12, 0xFFFF); // let the timer count to max value
 }
@@ -44,25 +44,22 @@ int main(void) {
 	clear_leds();
 	set_body_led(0);
 	set_front_led(0);
-	usb_start();
+	usb_start(); // chThdSuspendS() loop
 	motors_init();
-	//proximity_start();
-//	spi_comm_start();
+//	proximity_start();
+	spi_comm_start(); // chThdSuspendS() loop
 	serial_start();
-	//mic_start(NULL);
-
+//	mic_start(NULL);
 	timer12_start();
-//    calibrate_ir();
+//  calibrate_ir();
+
     bot_start();
     pi_regulator_start();
+    while (1) {chThdSleepMilliseconds(1000);}
 
     //use these 2 lines at start of thread using the prox sensors
-//    messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
+//  messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
 //	proximity_msg_t prox_values;
-
-//	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
-//	leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
-//	rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
 }
 
 #define STACK_CHK_GUARD 0xe2dee396

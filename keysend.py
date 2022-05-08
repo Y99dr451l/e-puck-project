@@ -5,7 +5,7 @@ import keyboard
 import numpy as np
 import serial
 
-port_name = 'COM9' if len(sys.argv) < 2 else str(sys.argv[1])
+port_name = 'COM21' if len(sys.argv) < 2 else str(sys.argv[1])
 try: port = serial.Serial(port=port_name, baudrate=115200, timeout=0.5)
 except Exception as e:
     print(f"Couldn't connect: {e}")
@@ -73,11 +73,11 @@ def readSerial(type='int16'):
 
 while (True):
     #data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
-    data = np.array((0, 0, 0), dtype='float')
-    sendSerial(data, 'float')
+    # data = np.array((0, 0, 0), dtype='float')
+    # sendSerial(data, 'float')
     time.sleep(1)
-    data = np.array((10, 0, 0), dtype='float')
+    data = np.array((10, 10, 0), dtype='float')
     sendSerial(data, 'float')
     quit()
-    #input = readSerial('int16')
-    #print(input)
+    # input = readSerial('float')
+    # print(input)
