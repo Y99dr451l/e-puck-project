@@ -5,12 +5,6 @@ import keyboard
 import numpy as np
 import serial
 
-port_name = 'COM21' if len(sys.argv) < 2 else str(sys.argv[1])
-try: port = serial.Serial(port=port_name, baudrate=115200, timeout=0.5)
-except Exception as e:
-    print(f"Couldn't connect: {e}")
-    sys.exit(0)
-
 def sendSerial(data, type='int16'):
     if type == 'float': tsize = 4; tstr = '<f'
     if type == 'int16': tsize = 2; tstr = '<h'
@@ -71,13 +65,63 @@ def readSerial(type='int16'):
         print('Timout...')
         return []
 
+port_name = 'COM21' if len(sys.argv) < 2 else str(sys.argv[1])
+try: port = serial.Serial(port=port_name, baudrate=115200, timeout=0.5)
+except Exception as e:
+    print(f"Couldn't connect: {e}")
+    # sys.exit(0)
+
+def input_array():
+    array = np.array([0, 0, 0], dtype='float32')
+    while(True):
+        i = 0
+        while i < 3:
+            inputstr = input(f'Enter coordinate {i}: ')
+            try:
+                float(inputstr)
+                floatbool = True
+            except ValueError:
+                floatbool = False
+            if floatbool:
+                array[i] = np.float32(inputstr)
+                i += 1
+            else: print('Input is not a float')
+        print(f'Entered values: {array}\n Send this to the bot? y/n')
+        input_needed = True
+        while(input_needed):
+            if keyboard.is_pressed('Y'): return array
+            if keyboard.is_pressed('N'): return None
+
+def byteprint(data):
+    send_buffer = bytearray([])
+    i = 0
+    while(i < 3):
+        send_buffer += struct.pack('<f', data[i])
+        i += 1
+    print(b'{}'.format(send_buffer))
+
 while (True):
+    input_needed = True
+    print('Send position (P) or destination (D)?')
+    while(input_needed):
+        if keyboard.is_pressed('D'): 
+            print('--- Entering destination coordinates ---')
+            destination = input_array()
+            if destination is not None: sendSerial(destination, 'float')
+            input_needed = False
+        elif keyboard.is_pressed('P'):
+            print('--- Entering position coordinates ---')
+            position = input_array()
+            if position is not None: sendSerial(position, 'float')
+            input_needed = False
+    
     #data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
-    # data = np.array((0, 0, 0), dtype='float')
-    # sendSerial(data, 'float')
-    time.sleep(1)
-    data = np.array((10, 10, 0), dtype='float')
-    sendSerial(data, 'float')
-    quit()
+
+# data = np.array((0, 0, 0), dtype='float')
+# sendSerial(data, 'float')
+time.sleep(1)
+data = np.array((10, 10, 0), dtype='float')
+sendSerial(data, 'float')
+quit()
     # input = readSerial('float')
     # print(input)

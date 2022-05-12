@@ -64,7 +64,6 @@ uint16_t ReceiveInt16FromComputer(BaseSequentialStream* in, int16_t* data, uint1
 uint16_t ReceiveFloatFromComputer(BaseSequentialStream* in, float* data, uint16_t size) {
 	volatile uint8_t c1, c2;
 	volatile uint16_t temp_size = 0;
-	uint8_t buffer[4] = {0, 0, 0, 0};
 	uint8_t state = 0;
 	while(state != 5){
         c1 = chSequentialStreamGet(in);
@@ -92,11 +91,13 @@ uint16_t ReceiveFloatFromComputer(BaseSequentialStream* in, float* data, uint16_
 	}
 	c1 = chSequentialStreamGet(in);
 	c2 = chSequentialStreamGet(in);
-	temp_size = (int16_t)((c1 | c2<<8));
-	if((temp_size/4) == size)
-		for(uint16_t i = 0; i < temp_size/4; i++){
+	temp_size = (int16_t)((c1 | c2 << 8));
+	if((temp_size/4) == size) {
+		uint8_t buffer[4] = {0, 0, 0, 0};
+		for(uint16_t i = 0; i < temp_size/4; i++) {
 			for (int j = 3; j >= 0; j--) buffer[j] = chSequentialStreamGet(in);
 			data[i] = *(float *)&buffer;
 		}
+	}
 	return temp_size/4;
 }

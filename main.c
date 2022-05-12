@@ -28,33 +28,32 @@ static void serial_start(void) {
 }
 
 static void timer12_start(void){
-    // timer 12 is a 16 bit timer so we can measure time to about 65ms with a 1Mhz counter
-    static const GPTConfig gpt12cfg = {100000, NULL, 0, 0}; // 100KHz timer clock in order to measure 10us
+    static const GPTConfig gpt12cfg = {100000, NULL, 0, 0}; // 100KHz timer clock to measure 10us
     gptStart(&GPTD12, &gpt12cfg);
-    gptStartContinuous(&GPTD12, 0xFFFF); // let the timer count to max value
+    gptStartContinuous(&GPTD12, 0xFFFF);
 }
 
 int main(void) {
 	// order from src/main.c
 	halInit();
 	chSysInit();
-
+	mpu_init();
 //	messagebus_init(&bus, &bus_lock, &bus_condvar);
-
-	clear_leds();
-	set_body_led(0);
-	set_front_led(0);
-	usb_start(); // chThdSuspendS() loop
+	usb_start();
 	motors_init();
 //	proximity_start();
-	spi_comm_start(); // chThdSuspendS() loop
+	spi_comm_start();
 	serial_start();
 //	mic_start(NULL);
 	timer12_start();
 //  calibrate_ir();
 
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+	pi_regulator_start();
     bot_start();
-    pi_regulator_start();
+
     while (1) {chThdSleepMilliseconds(1000);}
 
     //use these 2 lines at start of thread using the prox sensors
