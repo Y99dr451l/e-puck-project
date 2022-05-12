@@ -6,7 +6,7 @@
 #include "main.h"
 #include "bot.h"
 #include "leds.h"
-#include <motors.h>
+#include "motors.h"
 #include "pi_regulator.h"
 
 #define SPEED_LIMIT 800
@@ -19,6 +19,7 @@
 #define Kis 200
 
 static int16_t speeds[2] = {0, 0};
+static int16_t speedrot[2] = {0., 0.};
 
 static THD_WORKING_AREA(waPiRegulator, 512);
 static THD_FUNCTION(PiRegulator, arg) {
@@ -67,12 +68,13 @@ static THD_FUNCTION(PiRegulator, arg) {
 		else if (speed < -SPEED_LIMIT) speed = -SPEED_LIMIT;
         if (rotation > ROTATION_LIMIT) rotation = ROTATION_LIMIT;
 		else if (rotation < -ROTATION_LIMIT) rotation = -ROTATION_LIMIT;
+        speedrot[0] = speed; speedrot[1] = rotation;
         speeds[0] = speed - rotation; speeds[1] = speed + rotation;
-        left_motor_set_speed(speeds[0]); right_motor_set_speed(speeds[1]);
         chThdSleepUntilWindowed(time, time + MS2ST(10)); // 100Hz
     }
 }
 
 int16_t* get_speeds(void){return speeds;}
+int16_t* get_speedrot(void){return speedrot;}
 
 void pi_regulator_start(void){chThdCreateStatic(waPiRegulator, sizeof(waPiRegulator), NORMALPRIO, PiRegulator, NULL);}
