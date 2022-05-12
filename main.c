@@ -1,22 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "ch.h"
 #include "hal.h"
 #include "memory_protection.h"
-#include <usbcfg.h>
-#include <main.h>
-#include <chprintf.h>
-#include <motors.h>
+#include "usbcfg.h"
+#include "chprintf.h"
+#include "motors.h"
 #include "leds.h"
 #include "button.h"
 #include "spi_comm.h"
-#include <sensors/proximity.h>
-#include <math.h>
+#include "sensors/proximity.h"
+#include "sensors/VL53L0X/VL53L0X.h"
+#include "main.h"
 #include "communications.h"
 #include "bot.h"
 #include "pi_regulator.h"
+#include "kalman.h"
 
 //static messagebus_t bus;
 //static MUTEX_DECL(bus_lock);
@@ -43,6 +45,7 @@ int main(void) {
 	motors_init();
 //	proximity_start();
 	spi_comm_start();
+	VL53L0X_start();
 	serial_start();
 //	mic_start(NULL);
 	timer12_start();
@@ -51,8 +54,9 @@ int main(void) {
 	clear_leds();
 	set_body_led(0);
 	set_front_led(0);
+	bot_start();
 	pi_regulator_start();
-    bot_start();
+//    kalman_start();
 
     while (1) {chThdSleepMilliseconds(1000);}
 
