@@ -19,7 +19,7 @@
 #define Kis 200
 
 static int16_t speeds[2] = {0, 0};
-static int16_t speedrot[2] = {0., 0.};
+static int16_t speedrot[2] = {0, 0};
 
 static THD_WORKING_AREA(waPiRegulator, 512);
 static THD_FUNCTION(PiRegulator, arg) {
@@ -27,7 +27,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 	float* position;
 	float* destination;
     float D_error_sum = 0, Tm_error_sum = 0, T_error_sum = 0;
-    int32_t speed = 0, rotation = 0;
+    int32_t speed = 0, rotation = 0; // big enough for error multiplications
     float errors[5] = {0., 0., 0., 0., 0.};
     systime_t time;
     while(1) { // https://github.com/pms67/PID/blob/master/PID.c
@@ -39,25 +39,22 @@ static THD_FUNCTION(PiRegulator, arg) {
 		errors[Tm] = atan2f(errors[Y_], errors[X_]) - position[T_]; // heading error
 		errors[D_] = sqrt(errors[X_] * errors[X_] + errors[Y_] * errors[Y_]); // distance to dest
 		clear_leds();
-
-
-		// waddling
 		rotation = 0; speed = 0;
-		if (fabs(errors[D_]) > max_D_error) {
-        	if (fabs(errors[Tm]) > max_T_error) {
+		if (fabs(errors[D_]) > max_D_error) { // only correct heading if distance is wrong
+        	if (fabs(errors[Tm]) > max_T_error) { // if heading is wrong
 				Tm_error_sum += errors[Tm];
 				if (Tm_error_sum > ROTATION_LIMIT) Tm_error_sum = ROTATION_LIMIT;
 				else if (Tm_error_sum < -ROTATION_LIMIT) Tm_error_sum = -ROTATION_LIMIT;
 				rotation = Kps * errors[Tm] + Kis * Tm_error_sum;
 				set_led(LED5, 10);
-        	} else {
+        	} else { // if distance is wrong (but not the heading)
         		D_error_sum += errors[D_];
 				if (D_error_sum > SPEED_LIMIT) D_error_sum = SPEED_LIMIT;
 				else if (D_error_sum < -SPEED_LIMIT) D_error_sum = -SPEED_LIMIT;
 				speed = Kp * errors[D_] + Ki * D_error_sum;
 				set_led(LED1, 10);
         	}
-        } else if (fabs(errors[T_]) > max_T_error) { // if final heading is wrong
+        } else if (fabs(errors[T_]) > max_T_error) { // if final heading is wrong (and nothing else)
         	T_error_sum += errors[T_];
 			if (T_error_sum > ROTATION_LIMIT) T_error_sum = ROTATION_LIMIT;
 			else if (T_error_sum < -ROTATION_LIMIT) T_error_sum = -ROTATION_LIMIT;
