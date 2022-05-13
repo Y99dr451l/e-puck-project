@@ -18,9 +18,6 @@ def sendSerial(data, type='int16'):
     port.write(struct.pack('<h', tsize*size[0]))
     port.write(send_buffer)
     print(send_buffer)
-    #print('sent: ' + f'{data}'[1:-1])
-    # port_write = b'start' + struct.pack('<h', 2*size[0]) + send_buffer
-    # print(port_write)
 
 def readSerial(type='int16'):
     if type == 'float': tsize = 4; tstr = '<f'
@@ -65,18 +62,12 @@ def readSerial(type='int16'):
         print('Timout...')
         return []
 
-port_name = 'COM21' if len(sys.argv) < 2 else str(sys.argv[1])
-try: port = serial.Serial(port=port_name, baudrate=115200, timeout=0.5)
-except Exception as e:
-    print(f"Couldn't connect: {e}")
-    # sys.exit(0)
-
 def input_array():
     array = np.array([0, 0, 0], dtype='float32')
     while(True):
         i = 0
-        while i < 3:
-            inputstr = input(f'Enter coordinate {i}: ')
+        while i < 2:
+            inputstr = input(f'Enter {"x" if i == 0 else "y"}-coordinate: ')
             try:
                 float(inputstr)
                 floatbool = True
@@ -100,20 +91,17 @@ def byteprint(data):
         i += 1
     print(b'{}'.format(send_buffer))
 
-while (True):
-    input_needed = True
-    print('Send position (P) or destination (D)?')
-    while(input_needed):
-        if keyboard.is_pressed('D'): 
-            print('--- Entering destination coordinates ---')
-            destination = input_array()
-            if destination is not None: sendSerial(destination, 'float')
-            input_needed = False
-        elif keyboard.is_pressed('P'):
-            print('--- Entering position coordinates ---')
-            position = input_array()
-            if position is not None: sendSerial(position, 'float')
-            input_needed = False
+port_name = 'COM21' if len(sys.argv) < 2 else str(sys.argv[1])
+try: port = serial.Serial(port=port_name, baudrate=115200, timeout=0.5)
+except Exception as e:
+    print(f"Couldn't connect: {e}")
+    # sys.exit(0)
+input_needed = True
+while(True):
+    destination = input_array()
+    if destination is not None:
+        while(True): sendSerial(destination, 'float')
+    
     
     #data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
 
