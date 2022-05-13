@@ -95,7 +95,8 @@ uint16_t ReceiveFloatFromComputer(BaseSequentialStream* in, float* data, uint16_
 	if((temp_size/4) == size) {
 		uint8_t buffer[4] = {0, 0, 0, 0};
 		for(uint16_t i = 0; i < temp_size/4; i++) {
-			for (int j = 3; j >= 0; j--) buffer[j] = chSequentialStreamGet(in);
+			for(int j = 0; j < 4; j++) buffer[j] = chSequentialStreamGet(in);
+//			for(int j = 3; j >= 0; j--) buffer[j] = chSequentialStreamGet(in);
 			data[i] = *(float *)&buffer;
 		}
 	}
