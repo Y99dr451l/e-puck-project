@@ -19,9 +19,10 @@
 static float position[3] = {0., 0., 0.}; // mm, mm, rad
 static float destination[3] = {100., 100., 0.}; // mm, mm, rad
 static int16_t* speeds;
+static bool obstacle = false;
 
 static THD_WORKING_AREA(waRunBot, 512);
-static THD_FUNCTION(RunBot, arg) { // higher priority for no PI interruptions
+static THD_FUNCTION(RunBot, arg) { // higher priority and empty while-loops for no PI interruptions
     chRegSetThreadName(__FUNCTION__); (void)arg;
     bool first_start = true;
     uint8_t null_speed_counter = 0;
@@ -29,12 +30,14 @@ static THD_FUNCTION(RunBot, arg) { // higher priority for no PI interruptions
     while(1) {
     	time = chVTGetSystemTime();
     	speeds = get_speeds();
-		if (speeds[0] == 0 && speeds[1] == 0) null_speed_counter++;
-		if(button_is_pressed() || null_speed_counter > 20 || first_start) {
-			clear_leds(); set_body_led(0); set_front_led(0);
+		if (speeds[0] == 0 && speeds[1] == 0 && obstacle) null_speed_counter++;
+		if(button_is_pressed() || null_speed_counter > 10 || first_start) { // triggers after 1s of immobility
 			left_motor_set_speed(0); right_motor_set_speed(0);
+			clear_leds(); set_body_led(0); set_front_led(0);
+			while(button_is_pressed()) {} // in case of activation by button press, wait until release
 			for (uint8_t i = 0; i < 4; i++) set_rgb_led(i, 0, 10, 10); // cyan = waiting for button
-			while(!button_is_pressed()) {} // press button to start receiving
+			while(!button_is_pressed()) {} // press and release button (again) to start receiving
+			while(button_is_pressed()) {} // make sure to have started the byte-flow with python
 			for (uint8_t i = 0; i < 4; i++) set_rgb_led(i, 0, 0, 10); // blue = receiving
 			ReceiveFloatFromComputer((BaseSequentialStream *) &SD3, destination, 3);
 			first_start = false; null_speed_counter = 0; clear_leds();
@@ -53,12 +56,12 @@ static THD_FUNCTION(Odometry, arg) {
     while(1) {
     	time = chVTGetSystemTime();
     	if (VL53L0X_get_dist_mm() < TOF_DIST) {
+    		obstacle = true;
     		left_motor_set_speed(0); right_motor_set_speed(0);
-//    		for (uint8_t i = 0; i < 4; i++) set_rgb_led(i, 10, 0, 10); // purple
     		set_front_led(1);
     		GPTD12.tim->CNT = 0;
     		continue;
-    	} else set_front_led(0); //for (uint8_t i = 0; i < 4; i++) set_rgb_led(i, 0, 0, 0);
+    	} set_front_led(0); obstacle = false; // remove effects from obstacle detection
     	chSysLock(); // time-sensitive calculations
     	uint16_t timestep = GPTD12.tim->CNT; // /!\ max time of ~650ms
 		if (speeds[0] != 0 && speeds[1] != 0) { // http://faculty.salina.k-state.edu/tim/robotics_sg/Control/kinematics/odometry.html
