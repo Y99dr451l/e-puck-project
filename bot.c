@@ -30,8 +30,13 @@ static THD_FUNCTION(RunBot, arg) { // higher priority and empty while-loops for 
     while(1) {
     	time = chVTGetSystemTime();
     	speeds = get_speeds();
+<<<<<<< Updated upstream
 		if (speeds[0] == 0 && speeds[1] == 0 && obstacle) null_speed_counter++;
 		if(button_is_pressed() || null_speed_counter > 10 || first_start) { // triggers after 1s of immobility
+=======
+		if (speeds[0] == 0 && speeds[1] == 0 && !obstacle) null_speed_counter++;
+		if(button_is_pressed() || first_start) { //|| null_speed_counter > 10 || ) { // triggers after 1s of immobility
+>>>>>>> Stashed changes
 			left_motor_set_speed(0); right_motor_set_speed(0);
 			clear_leds(); set_body_led(0); set_front_led(0);
 			while(button_is_pressed()) {} // in case of activation by button press, wait until release
@@ -59,9 +64,16 @@ static THD_FUNCTION(Odometry, arg) {
     		obstacle = true;
     		left_motor_set_speed(0); right_motor_set_speed(0);
     		set_front_led(1);
+    		obstacle = true;
     		GPTD12.tim->CNT = 0;
     		continue;
+<<<<<<< Updated upstream
     	} set_front_led(0); obstacle = false; // remove effects from obstacle detection
+=======
+    	}
+    	set_front_led(0); obstacle = false;// remove effects from obstacle detection
+    	speeds = get_speeds();
+>>>>>>> Stashed changes
     	chSysLock(); // time-sensitive calculations
     	uint16_t timestep = GPTD12.tim->CNT; // /!\ max time of ~650ms
 		if (speeds[0] != 0 && speeds[1] != 0) { // http://faculty.salina.k-state.edu/tim/robotics_sg/Control/kinematics/odometry.html

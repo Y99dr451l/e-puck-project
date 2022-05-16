@@ -27,7 +27,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 	float* position;
 	float* destination;
     float D_error_sum = 0, Tm_error_sum = 0, T_error_sum = 0;
-    int32_t speed = 0, rotation = 0; // big enough for error multiplications
+    int32_t speed = 0, rotation = 0; // big enough for PI's multiplications
     float errors[5] = {0., 0., 0., 0., 0.};
     systime_t time;
     while(1) { // https://github.com/pms67/PID/blob/master/PID.c

@@ -101,15 +101,3 @@ while(True):
     destination = input_array()
     if destination is not None:
         while(True): sendSerial(destination, 'float')
-    
-    
-    #data = [1 if keyboard.is_pressed('wasd'[_]) else 0 for _ in range(4)]
-
-# data = np.array((0, 0, 0), dtype='float')
-# sendSerial(data, 'float')
-time.sleep(1)
-data = np.array((10, 10, 0), dtype='float')
-sendSerial(data, 'float')
-quit()
-    # input = readSerial('float')
-    # print(input)
