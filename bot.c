@@ -15,14 +15,14 @@
 #define TOF_DIST 100 // round-trip, so ~50mm in real distance
 
 static float position[3] = {0., 0., 0.}; // mm, mm, rad
-static float destination[3] = {1000., 1000., 0.}; // mm, mm, rad
+static float destination[3] = {0., 0., 0.}; // mm, mm, rad
 static int16_t* speeds;
 static bool obstacle = false;
 
 static THD_WORKING_AREA(waRunBot, 512);
 static THD_FUNCTION(RunBot, arg) { // higher priority and empty while-loops for no PI interruptions
     chRegSetThreadName(__FUNCTION__); (void)arg;
-    bool first_start = false;
+    bool first_start = true;
     uint8_t null_speed_counter = 0;
     systime_t time;
     while(1) {
