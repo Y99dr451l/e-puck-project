@@ -8,6 +8,7 @@
 #include "leds.h"
 #include "motors.h"
 #include "pi_regulator.h"
+#include "kalman.h"
 
 #define SPEED_LIMIT 800
 #define ROTATION_LIMIT MOTOR_SPEED_LIMIT-SPEED_LIMIT
@@ -15,7 +16,7 @@
 #define max_T_error 0.05f // rad, = 3°
 #define Kp 50
 #define Ki 200
-#define Kps 50
+#define Kps 25
 #define Kis 200
 
 static int16_t speeds[2] = {0, 0};
@@ -24,7 +25,7 @@ static int16_t speedrot[2] = {0, 0};
 static THD_WORKING_AREA(waPiRegulator, 512);
 static THD_FUNCTION(PiRegulator, arg) {
     chRegSetThreadName(__FUNCTION__); (void)arg;
-	float* position;
+    float* position;
 	float* destination;
     float D_error_sum = 0, Tm_error_sum = 0, T_error_sum = 0;
     int32_t speed = 0, rotation = 0; // big enough for PI's multiplications
@@ -32,7 +33,9 @@ static THD_FUNCTION(PiRegulator, arg) {
     systime_t time;
     while(1) { // https://github.com/pms67/PID/blob/master/PID.c
         time = chVTGetSystemTime();
-        position = get_position(); destination = get_destination();
+//        position = get_kalman_pos();
+        position = get_position();
+        destination = get_destination();
         errors[X_] = destination[X_] - position[X_];
 		errors[Y_] = destination[Y_] - position[Y_];
 		errors[T_] = destination[T_] - position[T_]; // heading error at dest

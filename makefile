@@ -13,6 +13,7 @@ CSRC += ./main.c \
 		./communications.c \
 		./bot.c \
 		./pi_regulator.c \
+		./kalman.c \
 		
 
 #Header folders to include

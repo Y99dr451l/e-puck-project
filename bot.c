@@ -12,31 +12,24 @@
 #include "communications.h"
 #include "pi_regulator.h"
 
-#define MM_PER_STEP (0.12566f*0.322f) // actual value * weird correction
-#define INV_ROBOT_WIDTH (0.01852f * 2) // 1/54, same thing here
 #define TOF_DIST 100 // round-trip, so ~50mm in real distance
 
 static float position[3] = {0., 0., 0.}; // mm, mm, rad
-static float destination[3] = {100., 100., 0.}; // mm, mm, rad
+static float destination[3] = {1000., 1000., 0.}; // mm, mm, rad
 static int16_t* speeds;
 static bool obstacle = false;
 
 static THD_WORKING_AREA(waRunBot, 512);
 static THD_FUNCTION(RunBot, arg) { // higher priority and empty while-loops for no PI interruptions
     chRegSetThreadName(__FUNCTION__); (void)arg;
-    bool first_start = true;
+    bool first_start = false;
     uint8_t null_speed_counter = 0;
     systime_t time;
     while(1) {
     	time = chVTGetSystemTime();
     	speeds = get_speeds();
-<<<<<<< Updated upstream
-		if (speeds[0] == 0 && speeds[1] == 0 && obstacle) null_speed_counter++;
-		if(button_is_pressed() || null_speed_counter > 10 || first_start) { // triggers after 1s of immobility
-=======
 		if (speeds[0] == 0 && speeds[1] == 0 && !obstacle) null_speed_counter++;
 		if(button_is_pressed() || first_start) { //|| null_speed_counter > 10 || ) { // triggers after 1s of immobility
->>>>>>> Stashed changes
 			left_motor_set_speed(0); right_motor_set_speed(0);
 			clear_leds(); set_body_led(0); set_front_led(0);
 			while(button_is_pressed()) {} // in case of activation by button press, wait until release
@@ -58,27 +51,23 @@ static THD_FUNCTION(Odometry, arg) {
     chRegSetThreadName(__FUNCTION__); (void)arg;
     systime_t time;
     float dleft, dright, dcenter, phi;
+    int32_t old_motor_pos[2] = {left_motor_get_pos(), right_motor_get_pos()};
     while(1) {
     	time = chVTGetSystemTime();
     	if (VL53L0X_get_dist_mm() < TOF_DIST) {
-    		obstacle = true;
     		left_motor_set_speed(0); right_motor_set_speed(0);
     		set_front_led(1);
     		obstacle = true;
     		GPTD12.tim->CNT = 0;
     		continue;
-<<<<<<< Updated upstream
-    	} set_front_led(0); obstacle = false; // remove effects from obstacle detection
-=======
     	}
     	set_front_led(0); obstacle = false;// remove effects from obstacle detection
     	speeds = get_speeds();
->>>>>>> Stashed changes
     	chSysLock(); // time-sensitive calculations
     	uint16_t timestep = GPTD12.tim->CNT; // /!\ max time of ~650ms
 		if (speeds[0] != 0 && speeds[1] != 0) { // http://faculty.salina.k-state.edu/tim/robotics_sg/Control/kinematics/odometry.html
 			dleft =  MM_PER_STEP*speeds[0]*timestep*1e-5; // timestep is in 10us
-			dright = MM_PER_STEP*speeds[1]*timestep*1e-5;
+			dright = MM_PER_STEP*speeds[1]*timestep*1e-5; // we didn't get the Hall encoders to work...
 			dcenter = 0.5*(dleft+dright);
 			phi = INV_ROBOT_WIDTH*(dright-dleft);
 			position[X_] += dcenter*cos(position[T_]); //+0.5*phi);
@@ -86,7 +75,6 @@ static THD_FUNCTION(Odometry, arg) {
 			position[T_] += phi;
 		}
 		chSysUnlock();
-		speeds = get_speeds();
 		left_motor_set_speed(speeds[0]); right_motor_set_speed(speeds[1]);
 		GPTD12.tim->CNT = 0;
 		chThdSleepUntilWindowed(time, time + MS2ST(10)); // 100Hz
