@@ -24,7 +24,7 @@ static void serial_start(void) {
 }
 
 static void timer11_start(void){
-    static const GPTConfig gpt11cfg = {100000, NULL, 0, 0}; // 100KHz timer clock to measure 10us
+    static const GPTConfig gpt11cfg = {10000, NULL, 0, 0}; // 10KHz timer clock to measure 100us
     gptStart(&GPTD11, &gpt11cfg);
     gptStartContinuous(&GPTD11, 0xFFFF);
 }
@@ -45,8 +45,7 @@ int main(void) { // order from src/main.c
 	VL53L0X_start();
 	serial_start();
 	mic_start(&audio_processing);
-	timer11_start();
-	timer12_start();
+	timer11_start(); timer12_start();
 	clear_leds(); set_body_led(0); set_front_led(0);
 	bot_start();
 	pi_regulator_start();
