@@ -9,8 +9,6 @@
 #include "pi_regulator.h"
 #include "kalman.h"
 
-#define RAD2DEG (180./M_PI)
-#define DEG2RAD (M_PI/180.)
 #define FFT_SIZE 1024
 #define NB_PARAM 3
 #define BATCH_SIZE 10
@@ -115,24 +113,22 @@ static THD_FUNCTION(Kalman, arg) {
 	float int_from_activ_mic = 0, distance = 0;
 	uint8_t min_alpha_ind = 0;
 	systime_t time;
-	arm_matrix_instance_f32 old_pos; //vector position
+	arm_matrix_instance_f32 old_pos;
 	arm_matrix_instance_f32 old_pos_gauss;
 	float32_t old_pos_gauss_arr[NB_PARAM*NB_PARAM] = { 0 };
-	arm_matrix_instance_f32 sonar_pos; //position given by sonar
+	arm_matrix_instance_f32 sonar_pos;
 	float32_t sonar_pos_arr[NB_PARAM] = { 0 };
 	arm_matrix_instance_f32 sonar_pos_gauss;
 	float32_t sonar_pos_gauss_arr[NB_PARAM * NB_PARAM];
 	arm_matrix_instance_f32 kalman_gain;
 	float32_t kalman_gain_arr[NB_PARAM * NB_PARAM] = { 0 };
-	arm_matrix_instance_f32 control_mat;
-	float32_t control_mat_arr[NB_PARAM] = { 0 };
 	arm_matrix_instance_f32 gaussian_qk;
 	float32_t gaussian_qk_arr[NB_PARAM * NB_PARAM];
 	arm_mat_init_f32(&old_pos, NB_PARAM, 1, old_pos_arr);
 	arm_mat_init_f32(&old_pos_gauss, NB_PARAM, NB_PARAM, old_pos_gauss_arr);
 	arm_mat_init_f32(&sonar_pos, NB_PARAM, 1, sonar_pos_arr);
 	{
-		float32_t rk_diag[3] = {1.e100, 1.e100, 1.e100};
+		float32_t rk_diag[3] = {1.e38, 1.e38, 1.e38};
 		arr_set_to_diagonal(sonar_pos_gauss_arr, rk_diag, NB_PARAM);
 	}
 	arm_mat_init_f32(&sonar_pos_gauss, NB_PARAM, NB_PARAM, sonar_pos_gauss_arr);
@@ -141,7 +137,6 @@ static THD_FUNCTION(Kalman, arg) {
 		float32_t qk_diag[3] = {1., 1., 1.};
 		arr_set_to_diagonal(gaussian_qk_arr, qk_diag, NB_PARAM);
 	}
-	arm_mat_init_f32(&control_mat, NB_PARAM, 1, control_mat_arr);
 	arm_mat_init_f32(&gaussian_qk, NB_PARAM, NB_PARAM, gaussian_qk_arr);
 	GPTD11.tim->CNT = 0;
 	while (1) {
@@ -191,32 +186,16 @@ static THD_FUNCTION(Kalman, arg) {
 				y_origin = distance * sin(alpha_final);
 				calibration = false; continue;
 			}
+			{ //update from sonar data
+				float *pos = get_position();
+				sonar_pos_arr[X_] = x_origin - distance * cos(alpha_final + pos[T_]);
+				sonar_pos_arr[Y_] = y_origin - distance * sin(alpha_final + pos[T_]);
+				sonar_pos_arr[T_] = alpha_final;
+			}
 		}
 		//Start Kalman
-		{ //update from sonar data
-			float *pos = get_position();
-			sonar_pos_arr[X_] = x_origin - distance * cos(alpha_final + pos[T_]); // *(sonar_pos.pData + X_)
-			sonar_pos_arr[Y_] = y_origin - distance * sin(alpha_final + pos[T_]);
-			sonar_pos_arr[T_] = alpha_final;
-		}
-		{ //update control
-			int16_t *speeds = get_speeds();
-			int16_t *speedrot = get_speedrot();
-			control_mat_arr[X_] = speeds[0] * MM_PER_STEP; // *(control_mat.pData + X_)
-			control_mat_arr[Y_] = speeds[1] * MM_PER_STEP;
-			control_mat_arr[T_] = (2 * speedrot[1]) * MM_PER_STEP * INV_ROBOT_WIDTH; //speed (right - left) / bot_radius
-		}
+		memcpy(old_pos_arr, get_position(), sizeof(old_pos_arr));
 		{
-			arm_matrix_instance_f32 tmp_mat, tmp_mat2;
-			float32_t tmp_mat_arr[NB_PARAM * 1], tmp_mat2_arr[NB_PARAM * 1];
-			arm_mat_init_f32(&tmp_mat, NB_PARAM, 1, tmp_mat_arr);
-			arm_mat_init_f32(&tmp_mat2, NB_PARAM, 1, tmp_mat2_arr);
-			arm_mat_scale_f32(&control_mat, (GPTD11.tim->CNT)*1e-4, &tmp_mat); //B*u, timestep is in 100us
-			GPTD11.tim->CNT = 0;
-			arm_mat_add_f32(&tmp_mat, &old_pos, &tmp_mat2);	//x = FxF^T + B*u; F = I
-			memcpy(old_pos_arr, tmp_mat2_arr, sizeof(old_pos_arr));
-		}
-		{//on normal distribution from odometry:
 			arm_matrix_instance_f32 tmp_mat;
 			float32_t tmp_mat_arr[NB_PARAM * NB_PARAM];
 			arm_mat_init_f32(&tmp_mat, NB_PARAM, NB_PARAM, tmp_mat_arr);
