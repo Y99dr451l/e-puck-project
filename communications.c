@@ -70,23 +70,23 @@ uint16_t ReceiveFloatFromComputer(BaseSequentialStream* in, float* data, uint16_
         switch(state){
         	case 0:
         		if(c1 == 'S') state = 1;
-        		else state = 0;
+        		else state = 0; break;
         	case 1:
         		if(c1 == 'T') state = 2;
         		else if(c1 == 'S') state = 1;
-        		else state = 0;
+        		else state = 0; break;
         	case 2:
         		if(c1 == 'A') state = 3;
         		else if(c1 == 'S') state = 1;
-        		else state = 0;
+        		else state = 0; break;
         	case 3:
         		if(c1 == 'R') state = 4;
         		else if(c1 == 'S') state = 1;
-        		else state = 0;
+        		else state = 0; break;
         	case 4:
         		if(c1 == 'T') state = 5;
         		else if(c1 == 'S') state = 1;
-        		else state = 0;
+        		else state = 0; break;
         }
 	}
 	c1 = chSequentialStreamGet(in);
