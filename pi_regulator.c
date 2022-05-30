@@ -11,7 +11,7 @@
 #include "kalman.h"
 
 #define SPEED_LIMIT 800
-#define ROTATION_LIMIT MOTOR_SPEED_LIMIT-SPEED_LIMIT
+#define ROTATION_LIMIT (MOTOR_SPEED_LIMIT-SPEED_LIMIT)
 #define max_D_error 2.f // mm
 #define max_T_error 0.05f // rad, = 3°
 #define Kp 50
@@ -33,8 +33,8 @@ static THD_FUNCTION(PiRegulator, arg) {
     systime_t time;
     while(1) { // https://github.com/pms67/PID/blob/master/PID.c
         time = chVTGetSystemTime();
-//        position = get_kalman_pos();
-        position = get_position();
+        position = get_kalman_pos();
+//        position = get_position();
         destination = get_destination();
         errors[X_] = destination[X_] - position[X_];
 		errors[Y_] = destination[Y_] - position[Y_];
